@@ -1,3 +1,4 @@
+// sätt den till en slumpmässig x position och sedan y beroende på om den är på en kant eller i några av mittenkolumnerna. svår att skrifligt förklara :/
 function generatePointLocation () {
     point.set(LedSpriteProperty.X, randint(0, 4))
     if (point.get(LedSpriteProperty.X) == 0) {
@@ -27,6 +28,7 @@ function generatePointLocation () {
         point.set(LedSpriteProperty.Y, randint(0, 4))
     }
 }
+// Vänd spelaren och även andra riktningsvariabeln för att det skräddarsydda svängsystemet ska fungera
 input.onButtonPressed(Button.A, function () {
     playerSprite.turn(Direction.Right, 180)
     if (direction == 1) {
@@ -35,6 +37,7 @@ input.onButtonPressed(Button.A, function () {
         direction = 1
     }
 })
+// nästan identisk till generatePointLocation bara det att denna genererar muren istället för målet
 function generateBlockLocation () {
     block.set(LedSpriteProperty.X, randint(0, 4))
     if (block.get(LedSpriteProperty.X) == 0) {
@@ -64,20 +67,28 @@ function generateBlockLocation () {
         block.set(LedSpriteProperty.Y, randint(0, 4))
     }
 }
+// Kolla ifall spelaren nuddar målet. om ja:
+// lägg till poäng
+// gör spelaren snabbare
+// varje tio poäng får man ett extra liv
+// om nej:
+// spela ett ljud så man vet att man misslyckats och ta bort ett liv
+// generera nya positioner för muren och målet
+// pausa spelet i en halv sekund för att spelaren ska ha en chans att se banan innan det startar. främst för höga hastigheter
 input.onButtonPressed(Button.B, function () {
-    if (playerSprite.get(LedSpriteProperty.X) == point.get(LedSpriteProperty.X) && playerSprite.get(LedSpriteProperty.Y) == point.get(LedSpriteProperty.Y)) {
+    if (playerSprite.isTouching(point)) {
         game.addScore(1)
+        music.play(music.createSoundExpression(WaveShape.Square, 1, 5000, 255, 0, 500, SoundExpressionEffect.None, InterpolationCurve.Linear), music.PlaybackMode.InBackground)
         if (playerSpeed > 100) {
-            playerSpeed += -20
+            playerSpeed += -40
         }
-        if (game.score() % 10 == 0) {
+        if (game.score() % 5 == 0) {
             game.addLife(1)
         }
     } else {
         game.removeLife(1)
+        music.play(music.createSoundExpression(WaveShape.Sine, 5000, 0, 255, 0, 500, SoundExpressionEffect.None, InterpolationCurve.Linear), music.PlaybackMode.InBackground)
     }
-    generatePointLocation()
-    generateBlockLocation()
     while (point.get(LedSpriteProperty.X) == block.get(LedSpriteProperty.X) && point.get(LedSpriteProperty.Y) == block.get(LedSpriteProperty.Y) || (playerSprite.get(LedSpriteProperty.X) == point.get(LedSpriteProperty.X) || playerSprite.get(LedSpriteProperty.Y) == point.get(LedSpriteProperty.Y))) {
         generatePointLocation()
     }
@@ -111,8 +122,10 @@ block.set(LedSpriteProperty.Brightness, 55)
 point.set(LedSpriteProperty.Blink, 250)
 point.set(LedSpriteProperty.Brightness, 55)
 game.setLife(3)
-playerSpeed = 400
+playerSpeed = 500
 paused = 0
+// ta ett steg och kolla sen ifall man är i ett hörn och isåfall svänger man
+// sedan kollar man ifall man slagit i muren och isäfall tar man skada, ett ljud spelas och man "studsar."
 basic.forever(function () {
     while (paused == 0) {
         playerSprite.move(1)
@@ -125,6 +138,7 @@ basic.forever(function () {
         }
         if (playerSprite.get(LedSpriteProperty.X) == block.get(LedSpriteProperty.X) && playerSprite.get(LedSpriteProperty.Y) == block.get(LedSpriteProperty.Y)) {
             game.removeLife(1)
+            music.play(music.createSoundExpression(WaveShape.Sine, 5000, 0, 255, 0, 500, SoundExpressionEffect.None, InterpolationCurve.Linear), music.PlaybackMode.InBackground)
             playerSprite.turn(Direction.Right, 180)
             if (direction == 1) {
                 direction = 0
